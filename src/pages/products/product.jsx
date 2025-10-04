@@ -111,13 +111,16 @@ export const Product = () => {
                                         </div>
 
                                     </div>
-
                                     <div className="col-6">
                                         <div>
-                                            <label for="cod_Velocidad" className="form-label mt-4">Cod. Velocidad</label>
-                                            <input type="text" className="form-control" id="cod_velocidad" aria-describedby="radio" placeholder="ej. V" />
+                                            <label for="velocidad" className="form-label mt-4">Cod. velocidad</label>
+                                            <select className="form-select" id="calidad">
+                                                <option>Selecciona cod. velocidad</option>
+                                                <option>V</option>
+                                                <option>W</option>
+                                                <option>Y</option>
+                                            </select>
                                         </div>
-
                                     </div>
                                     <div className="col-6">
                                     <label for="coste" className="form-label mt-4">Coste</label>
@@ -146,6 +149,23 @@ export const Product = () => {
 
                                             </select>
                                             <small>Selecciona 1 para estado bajo o 3 para muy buen estado</small>
+                                        </div>
+                                    </div>
+                                    <div className="col-6">
+                                        <div>
+                                            <label for="stock" className="form-label mt-4">Stock</label>
+                                            <input type="number" className="form-control" id="stock" aria-describedby="stock" placeholder="ej. 3" />
+
+                                        </div>
+                                    </div>
+                                    <div className="col-6">
+                                        <div>
+                                            <label for="is_new" className="form-label mt-4">¿Es Nueva?</label>
+                                            <select className="form-select" id="is_new">
+                                                <option>Selecciona una respuesta</option>
+                                                <option>Si</option>
+                                                <option>No</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
