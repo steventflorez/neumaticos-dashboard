@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { preconnect } from 'react-dom';
 import { useSelector } from 'react-redux';
 
 export const CarritoModal = () => {

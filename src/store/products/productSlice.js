@@ -24,7 +24,8 @@ export const productSlice = createSlice({
     error: null,
     edit: false,
     productSlice: null,
-    addProduct: null
+    addProduct: null,
+    sale:null,
   },
   reducers: {
     setTire: (state, action) => {
@@ -38,6 +39,9 @@ export const productSlice = createSlice({
     },
     setAddProduct: (state,action) => {
       state.addProduct = action.payload
+    },
+    setSale: (state, action) => {
+      state.sale = action.payload
     }
   },
   extraReducers: (builder) => {
@@ -62,4 +66,4 @@ export const productSlice = createSlice({
   },
 });
 
-export const { setTire , setEdit, setProductSlice, setAddProduct} = productSlice.actions;
+export const { setTire , setEdit, setProductSlice, setAddProduct, setSale} = productSlice.actions;

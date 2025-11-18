@@ -1,5 +1,5 @@
 import { getTireByDiameter, getTireByRef } from "../../data/products/Tire";
-import { setAddProduct, setEdit, setProductSlice, setTire } from "./productSlice";
+import { setAddProduct, setEdit, setProductSlice, setSale, setTire } from "./productSlice";
 
 
 export const startGetTireByRef = (ref) => {
@@ -35,3 +35,11 @@ export const startSetAddProduct = (product)=>{
         dispatch(setAddProduct(product))
     }
 }
+
+export const startSetSale = (sale)=>{
+    console.log('sale', sale)
+    return async (dispatch) => {
+        dispatch(setSale(sale))
+    }
+}
+

@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { MosalVenta } from './MosalVenta.jsx'
+import { startSetSale } from '../../store/products/thunks.js';
+import { useDispatch } from 'react-redux';
 
 export const Venta = () => {
   const [productos, setProductos] = useState([]);
   const [aplicarIva, setAplicarIva] = useState(false);
   const isFirstRender = useRef(true);
-
+  const dispatch = useDispatch();
   useEffect(() => {
     const productsLocal = JSON.parse(localStorage.getItem('productsCar'));
     if (productsLocal) {
@@ -47,7 +50,20 @@ export const Venta = () => {
 
   const handleConfirmSale = () => {
     // Implementar lógica de confirmación de venta aquí
-    console.log('Venta confirmada:', productos, { aplicarIva });
+    const sale = {
+      name_cliente: '',
+      number_client: '',
+      email_client: '',
+      matricula_car: '',
+      sub_total_amount: subtotal,
+      payment_method:'',
+      total_amount: total,
+      tax_amount: aplicarIva? iva:0,
+      tax:aplicarIva?21:0,
+      notes:'',
+    }
+
+    dispatch(startSetSale(sale))
   };
 
   const subtotal = productos.reduce((acc, item) => acc + (Number(item.count) * Number(item.tire.product.price)), 0);
@@ -104,12 +120,14 @@ export const Venta = () => {
               {aplicarIva && <div><strong>IVA (21%):</strong> € {iva.toFixed(2)}</div>}
               <div><strong>Total:</strong> € {total.toFixed(2)}</div>
             </div>
-            <button type="button" className="btn btn-primary" disabled={total <= 0} onClick={handleConfirmSale}>
+            <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#venta_modal" disabled={total <= 0} onClick={handleConfirmSale}>
               Confirmar venta
             </button>
           </div>
         </div>
       </div>
+
+      <MosalVenta />
     </>
   );
 };
