@@ -17,12 +17,13 @@ export const getTireByRef = async (ref) => {
     if (error) throw error;
     return data;
 }
-
 export const getTireByDiameter = async (diameter) => {
     const { data, error } = await supabase
         .from("tire")
         .select("*,product:product_id(*),speed_index:speed_rating_id(*)")
-        .eq("diameter", diameter);
+        .eq("diameter", diameter)
+        .gt("product_id.stock", 0); // ✅ Usar el nombre de la columna FK, no el alias
+    
     if (error) throw error;
     return data;
 }
@@ -135,7 +136,7 @@ export const updateTireWithProduct = async (tireId, tireData, productData) => {
             throw getTireError;
         }
         if (!currentTire) {
-            console.error(`[updateTireWithProduct] Tire con ID ${tireId} no encontrado.`);
+           
             throw new Error(`Tire con ID ${tireId} no encontrado.`);
         }
 
@@ -144,7 +145,7 @@ export const updateTireWithProduct = async (tireId, tireData, productData) => {
         // 2. Actualizar el producto
         let updatedProduct = null;
         if (productData && Object.keys(productData).length > 0) {
-            console.log("[updateTireWithProduct] Actualizando producto con ID:", productId);
+           
             updatedProduct = await updateProduct(productId, productData);
         }
 
@@ -152,7 +153,6 @@ export const updateTireWithProduct = async (tireId, tireData, productData) => {
         const tireToUpdate = { ...tireData };
         delete tireToUpdate.product_id; // Evitar intentar actualizar foreign key
 
-        console.log("[updateTireWithProduct] Actualizando tire con ID:", tireId);
         const updatedTire = await updateTire(tireId, tireToUpdate);
 
         return {

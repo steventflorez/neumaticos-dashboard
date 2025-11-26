@@ -35,14 +35,17 @@ export const MosalVenta = () => {
         notes: notes,
 
       }
-      
+console.log('salePayload', salePayload)
       const response = await createSaleWithItems(salePayload, items)
-      console.log('response', response)
+      //console.log('response', response)
+      localStorage.setItem('productsCar',"[]")
+      
       dispatch(startSetSale(salePayload))
       if (response.error) {
         console.error('Error al crear la venta:', response.error)
       } else {
         console.log('Venta creada correctamente:', response.data)
+        window.location.reload();
       }
     }
     return (

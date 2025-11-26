@@ -11,7 +11,9 @@ export const Caja = () => {
     useEffect(() => {
         const fetchTransactions = async () => {
             const transactiosDB = await getAllCashTransactions();
-            setTransactions(transactiosDB);
+            // Ordenar las transacciones por fecha en orden descendente
+            const sortedTransactions = transactiosDB.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            setTransactions(sortedTransactions);
         };
 
         fetchTransactions();

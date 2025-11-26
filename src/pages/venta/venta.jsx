@@ -49,6 +49,7 @@ export const Venta = () => {
   };
 
   const handleConfirmSale = () => {
+    console.log('Confirmar venta', aplicarIva);
     // Implementar lógica de confirmación de venta aquí
     const sale = {
       name_cliente: '',

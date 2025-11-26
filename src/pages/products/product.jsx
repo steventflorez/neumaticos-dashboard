@@ -270,6 +270,7 @@ export const Product = () => {
                                                 <option>Michelin</option>
                                                 <option>Pirelly</option>
                                                 <option>GodYear</option>
+                                                <option>Pinchazo</option>
 
                                             </select>
                                         </div>
