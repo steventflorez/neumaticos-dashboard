@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/theme.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -11,9 +12,9 @@ import { checkSupabaseConfig, verifySupabaseConnectivity } from './supabaseClien
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
-    <BrowserRouter>
-       <App/>
-    </BrowserRouter>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </Provider>
   </StrictMode>,
 )
@@ -22,6 +23,6 @@ createRoot(document.getElementById('root')).render(
 if (import.meta.env.DEV) {
   if (checkSupabaseConfig()) {
     // No bloquear UI: ejecutar y loguear resultado
-    verifySupabaseConnectivity()
+    // verifySupabaseConnectivity()
   }
 }

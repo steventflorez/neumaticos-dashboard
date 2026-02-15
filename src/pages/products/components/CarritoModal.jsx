@@ -3,137 +3,144 @@ import { useSelector } from 'react-redux';
 
 export const CarritoModal = () => {
     const [leableStock, setLeableStock] = useState(false)
-    const [buttonConfitm, setButtonConfirm] = useState(false)
+    const [buttonConfirm, setButtonConfirm] = useState(false)
     const [errorStockSuma, setErrorStockSuma] = useState(false)
-
+    const [cantidad, setCantidad] = useState('')
 
     const tire = useSelector((state) => state.products.addProduct);
-    
 
-    const verificarStock =(e)=>{
+    const verificarStock = (e) => {
         const pedido = e.target.value
+        setCantidad(pedido)
         setButtonConfirm(true)
         setErrorStockSuma(false)
-        if(pedido > tire.product.stock ){
+        setLeableStock(false)
+
+        if (pedido > tire.product.stock) {
             setLeableStock(true)
             setButtonConfirm(false)
         }
-        if(pedido.trim() === ""){
+        if (pedido.trim() === "") {
             setLeableStock(false)
             setButtonConfirm(false)
             setErrorStockSuma(false)
         }
     }
 
-
-    const addTire = ()=>{
+    const addTire = () => {
         const products = JSON.parse(localStorage.getItem('productsCar'));
-      
-        
-        if(products === null){
-            const value = document.getElementById('cantidad').value
-           
-            const updatedTire = [{
-                tire,count:value
-            }]
-            localStorage.setItem('productsCar',JSON.stringify(updatedTire))
-            document.getElementById('cantidad').value = ""
-            setErrorStockSuma(false)
-            
-        }else{
-            console.log('aqui')
-                verificateTireExisting()
-        }
 
-        
+        if (products === null) {
+            const updatedTire = [{ tire, count: cantidad }]
+            localStorage.setItem('productsCar', JSON.stringify(updatedTire))
+            setCantidad('')
+            setErrorStockSuma(false)
+        } else {
+            verificateTireExisting()
+        }
     }
 
-    const verificateTireExisting =()=>{
+    const verificateTireExisting = () => {
         const products = JSON.parse(localStorage.getItem('productsCar'));
-        console.log(products[0],tire.id)
-
-
         const existe = products.some(item => item.tire.id == tire.id)
-        if(!existe){
-            const value = document.getElementById('cantidad').value
-            const newProduct = {
-                tire,count:value
-            }
 
+        if (!existe) {
+            const newProduct = { tire, count: cantidad }
             products.push(newProduct)
-            localStorage.setItem('productsCar',JSON.stringify(products))
-            document.getElementById('cantidad').value = "";
+            localStorage.setItem('productsCar', JSON.stringify(products))
+            setCantidad('')
             setErrorStockSuma(false)
-        }
-        else{
-            const value = document.getElementById('cantidad').value
+        } else {
             const productoExistente = products.find(item => item.tire.id == tire.id)
-            
-            if(productoExistente){
+            if (productoExistente) {
                 const countActual = parseInt(productoExistente.count)
-                const countNuevo = parseInt(value)
+                const countNuevo = parseInt(cantidad)
                 const stockDisponible = productoExistente.tire.product.stock
-                
-                if((countActual + countNuevo) > stockDisponible){
+
+                if ((countActual + countNuevo) > stockDisponible) {
                     setErrorStockSuma(true)
                     setButtonConfirm(false)
                     return
                 }
-                
+
                 setErrorStockSuma(false)
                 products.map(item => {
-                    if(item.tire.id == tire.id){
+                    if (item.tire.id == tire.id) {
                         item.count = countActual + countNuevo
                     }
                     return item
                 })
-                localStorage.setItem('productsCar',JSON.stringify(products))
-                document.getElementById('cantidad').value = "";
+                localStorage.setItem('productsCar', JSON.stringify(products))
+                setCantidad('')
             }
         }
-
     }
-
-
-
 
     return (
         <div className="modal fade" id="confirmacionModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h1 className="modal-title fs-5" id="exampleModalLabel">Confirmar Rueda</h1>
+                        <h5 className="modal-title fw-bold d-flex align-items-center">
+                            <i className="bi bi-cart-plus text-info me-2"></i>
+                            Añadir al Carrito
+                        </h5>
                         <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div className="modal-body">
-                        <form action="">
-                            <div className="row mt-3">
-
-                                <div className="col-6">
+                        {tire && (
+                            <div className="rounded-3 p-3 mb-3" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--color-border)' }}>
+                                <div className="d-flex align-items-center">
+                                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                        style={{ width: '40px', height: '40px', background: 'var(--color-accent-muted)' }}>
+                                        <i className="bi bi-circle text-info small"></i>
+                                    </div>
                                     <div>
-                                        <label for="cantidad" className="form-label mt-4">Cantidad</label>
-                                        <input type="number" className="form-control" id="cantidad" aria-describedby="cantidad" placeholder="ej. 2" onChange={verificarStock}/>
-                                        {leableStock && (
-                                            <label for="cantidad" className="form-label mt-4 text-danger" >La cantidad es superior al numero de stock</label>
-
-                                        )}
-                                        {errorStockSuma && (
-                                            <label for="cantidad" className="form-label mt-4 text-danger" >La cantidad sumada supera el stock disponible</label>
-                                        )}
-
+                                        <h6 className="mb-0 fw-bold">{tire.product?.name}</h6>
+                                        <small className="text-muted">
+                                            {tire.width}/{tire.height}/R{tire.diameter} · Stock: {tire.product?.stock}
+                                        </small>
                                     </div>
                                 </div>
-
                             </div>
-                        </form>
+                        )}
+
+                        <div>
+                            <label htmlFor="cantidad" className="form-label">Cantidad</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                id="cantidad"
+                                placeholder="ej. 2"
+                                value={cantidad}
+                                onChange={verificarStock}
+                            />
+                            {leableStock && (
+                                <small className="text-danger mt-2 d-block">
+                                    <i className="bi bi-exclamation-triangle me-1"></i>
+                                    La cantidad supera el stock disponible
+                                </small>
+                            )}
+                            {errorStockSuma && (
+                                <small className="text-danger mt-2 d-block">
+                                    <i className="bi bi-exclamation-triangle me-1"></i>
+                                    La cantidad sumada supera el stock disponible
+                                </small>
+                            )}
+                        </div>
                     </div>
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        {buttonConfitm && (
-                            <button type="button" className="btn btn-primary"  onClick={addTire}> Confirmar Rueda</button>
-
+                        <button type="button" className="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                        {buttonConfirm && (
+                            <button
+                                type="button"
+                                className="btn btn-primary d-flex align-items-center"
+                                onClick={addTire}
+                            >
+                                <i className="bi bi-cart-check me-2"></i>
+                                Confirmar
+                            </button>
                         )}
-                        
                     </div>
                 </div>
             </div>
