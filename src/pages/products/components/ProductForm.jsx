@@ -92,8 +92,20 @@ export const ProductForm = ({ initialData, isEditMode, onSubmit, onCancel }) => 
                     <select className="form-select" name="brand" value={formData.brand} onChange={handleChange}>
                         <option value="">Todas las Marcas</option>
                         <option value="Michelin">Michelin</option>
-                        <option value="Pirelly">Pirelly</option>
-                        <option value="GodYear">GodYear</option>
+                        <option value="Pirelli">Pirelli</option>
+                        <option value="Goodyear">Goodyear</option>
+                        <option value="Bridgestone">Bridgestone</option>
+                        <option value="Continental">Continental</option>
+                        <option value="Dunlop">Dunlop</option>
+                        <option value="Hankook">Hankook</option>
+                        <option value="Yokohama">Yokohama</option>
+                        <option value="Kumho">Kumho</option>
+                        <option value="Toyo">Toyo</option>
+                        <option value="Firestone">Firestone</option>
+                        <option value="BFGoodrich">BFGoodrich</option>
+                        <option value="Falken">Falken</option>
+                        <option value="Nexen">Nexen</option>
+                        <option value="Cooper">Cooper</option>
                         <option value="Pinchazo">Pinchazo</option>
                     </select>
                 </div>
