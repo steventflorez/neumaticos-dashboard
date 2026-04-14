@@ -431,6 +431,81 @@ export const getAllCashTransactions = async () => {
         throw error;
     }
 };
+export const deleteSale = async (saleId) => {
+    try {
+        if (!saleId) throw new Error("ID de venta no proporcionado.");
+
+        // 1. Buscar transacciones de caja asociadas a esta venta
+        const { data: transactions, error: txError } = await supabase
+            .from("cash_transactions")
+            .select("id, amount, type")
+            .eq("sale_id", saleId);
+
+        if (txError) {
+            console.error('[deleteSale] Error al buscar transacciones:', txError);
+            throw txError;
+        }
+
+        // 2. Si hay transacciones, revertir el saldo de la caja y eliminarlas
+        if (transactions && transactions.length > 0) {
+            // Calcular el total a revertir (restar ingresos, sumar gastos)
+            const totalToRevert = transactions.reduce((sum, tx) => {
+                return sum + (tx.type === 'income' ? tx.amount : -tx.amount);
+            }, 0);
+
+            // Obtener saldo actual de la caja
+            const { data: cashRegister, error: cashError } = await supabase
+                .from("cash_register")
+                .select("id, current_balance")
+                .single();
+
+            if (cashError) {
+                console.error('[deleteSale] Error al obtener caja:', cashError);
+                throw cashError;
+            }
+
+            // Actualizar saldo (restar lo que se había sumado)
+            const newBalance = Number(cashRegister.current_balance) - totalToRevert;
+            const { error: updateCashError } = await supabase
+                .from("cash_register")
+                .update({ current_balance: newBalance })
+                .eq("id", cashRegister.id);
+
+            if (updateCashError) {
+                console.error('[deleteSale] Error al actualizar caja:', updateCashError);
+                throw updateCashError;
+            }
+
+            // Eliminar las transacciones asociadas
+            const { error: deleteTxError } = await supabase
+                .from("cash_transactions")
+                .delete()
+                .eq("sale_id", saleId);
+
+            if (deleteTxError) {
+                console.error('[deleteSale] Error al eliminar transacciones:', deleteTxError);
+                throw deleteTxError;
+            }
+        }
+
+        // 3. Soft-delete de la venta
+        const { error } = await supabase
+            .from("sale")
+            .update({ deleted_at: new Date().toISOString() })
+            .eq("id", saleId);
+
+        if (error) {
+            console.error('[deleteSale] Error al eliminar la venta:', error);
+            throw error;
+        }
+
+        return { success: true, message: `Venta #${saleId} eliminada correctamente.` };
+    } catch (error) {
+        console.error('[deleteSale] Error:', error);
+        throw error;
+    }
+};
+
 export const createNegativeTransaction = async (amount, description) => {
     try {
         // Validar que el monto sea un número y positivo

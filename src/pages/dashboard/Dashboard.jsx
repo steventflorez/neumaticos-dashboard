@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { getSalesByCreationDate, getCashRegister } from '../../data/products/Tire';
+import { getSalesByCreationDate, getCashRegister, deleteSale } from '../../data/products/Tire';
 import { Link } from 'react-router-dom';
 
 export const Dashboard = () => {
@@ -10,6 +10,8 @@ export const Dashboard = () => {
     const [endDate, setEndDate] = useState("");
     const [customSales, setCustomSales] = useState([]);
     const [cashRegister, setCashRegister] = useState(null);
+    const [saleToDelete, setSaleToDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const handleCustomDateFilter = async (startDate, endDate) => {
         try {
@@ -18,6 +20,20 @@ export const Dashboard = () => {
             setCustomSales(ventas);
         } catch (error) {
             console.error('Error al obtener las ventas personalizadas:', error);
+        }
+    };
+
+    const handleDeleteSale = async () => {
+        if (!saleToDelete) return;
+        setDeleting(true);
+        try {
+            await deleteSale(saleToDelete.id);
+            setCustomSales(prev => prev.filter(s => s.id !== saleToDelete.id));
+            setSaleToDelete(null);
+        } catch (error) {
+            console.error('Error al eliminar la venta:', error);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -217,6 +233,7 @@ export const Dashboard = () => {
                                         <th>Subtotal</th>
                                         <th>IVA</th>
                                         <th>Total</th>
+                                        <th className="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -232,6 +249,18 @@ export const Dashboard = () => {
                                             <td>€ {sale.sub_total_amount}</td>
                                             <td className="text-warning">€ {sale.tax_amount}</td>
                                             <td className="fw-bold text-info">€ {sale.total_amount}</td>
+                                            <td className="text-center">
+                                                <button
+                                                    className="btn btn-outline-danger btn-sm d-inline-flex align-items-center justify-content-center"
+                                                    style={{ width: '34px', height: '34px', borderRadius: '8px' }}
+                                                    title="Eliminar venta"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteSaleModal"
+                                                    onClick={() => setSaleToDelete(sale)}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -240,6 +269,79 @@ export const Dashboard = () => {
                     </div>
                 </div>
             )}
+
+            {/* Modal Confirmar Eliminación de Venta */}
+            <div className="modal fade" id="deleteSaleModal" tabIndex="-1" aria-labelledby="deleteSaleModalLabel" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold d-flex align-items-center" id="deleteSaleModalLabel">
+                                <div className="rounded-3 d-flex align-items-center justify-content-center me-3"
+                                    style={{ width: '40px', height: '40px', background: 'var(--color-danger-muted, rgba(220,53,69,0.15))' }}>
+                                    <i className="bi bi-exclamation-triangle" style={{ color: 'var(--color-danger, #dc3545)' }}></i>
+                                </div>
+                                Eliminar Venta
+                            </h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" onClick={() => setSaleToDelete(null)}></button>
+                        </div>
+                        <div className="modal-body">
+                            {saleToDelete && (
+                                <>
+                                    <p className="text-muted mb-3">¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.</p>
+                                    <div className="rounded-3 p-3 mb-2" style={{ background: 'var(--color-accent-muted, rgba(255,255,255,0.05))' }}>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span className="text-muted">Venta</span>
+                                            <span className="fw-bold">#{saleToDelete.id}</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span className="text-muted">Cliente</span>
+                                            <span className="fw-medium">{saleToDelete.name_cliente || '—'}</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span className="text-muted">Método de pago</span>
+                                            <span className={`badge ${saleToDelete.payment_method == 1 ? 'bg-success bg-opacity-25 text-success' : 'bg-info bg-opacity-25 text-info'}`}>
+                                                <i className={`bi ${saleToDelete.payment_method == 1 ? 'bi-cash' : 'bi-credit-card'} me-1`}></i>
+                                                {saleToDelete.payment_method == 1 ? 'Efectivo' : 'Tarjeta'}
+                                            </span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span className="text-muted">Subtotal</span>
+                                            <span>€ {saleToDelete.sub_total_amount}</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span className="text-muted">IVA</span>
+                                            <span className="text-warning">€ {saleToDelete.tax_amount}</span>
+                                        </div>
+                                        <hr className="my-2" style={{ borderColor: 'var(--color-border)' }} />
+                                        <div className="d-flex justify-content-between">
+                                            <span className="fw-bold">Total</span>
+                                            <span className="fw-bold text-info fs-5">€ {saleToDelete.total_amount}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="modal-footer border-0 pt-0">
+                            <button type="button" className="btn btn-outline-light" data-bs-dismiss="modal" onClick={() => setSaleToDelete(null)}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-danger d-flex align-items-center"
+                                disabled={deleting}
+                                onClick={handleDeleteSale}
+                                data-bs-dismiss="modal"
+                            >
+                                {deleting ? (
+                                    <><span className="spinner-border spinner-border-sm me-2"></span>Eliminando...</>
+                                ) : (
+                                    <><i className="bi bi-trash me-2"></i>Eliminar Venta</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </>
     )
 }
