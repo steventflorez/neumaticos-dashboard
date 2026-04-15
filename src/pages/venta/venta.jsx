@@ -94,75 +94,95 @@ export const Venta = () => {
         </div>
       ) : (
         <div className="row g-4 stagger-children" style={{ marginBottom: '140px' }}>
-          {productos.map((item, index) => (
-            <div key={index} className="col-12 col-md-6 col-xl-4 animate-fade-in">
-              <div className="premium-card h-100">
-                {/* Card Header */}
-                <div className="d-flex justify-content-between align-items-center p-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <div className="d-flex align-items-center">
-                    <div className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                      style={{ width: '40px', height: '40px', background: 'var(--color-accent-muted)' }}>
-                      <i className="bi bi-circle text-info small"></i>
-                    </div>
-                    <div>
-                      <h6 className="mb-0 fw-bold">{item.tire.product.name}</h6>
-                      <small className="text-muted">{item.tire.width}/{item.tire.height}/R{item.tire.diameter}</small>
-                    </div>
-                  </div>
-                  <span className={`badge ${item.tire.is_new ? 'bg-success bg-opacity-25 text-success' : 'bg-warning bg-opacity-25 text-warning'}`}>
-                    {item.tire.is_new ? 'Nueva' : 'Ocasión'}
-                  </span>
-                </div>
+          {productos.map((item, index) => {
+            const isService = item.isService === true;
 
-                <div className="card-body">
-                  {/* Speed/Load info */}
-                  <div className="d-flex gap-3 mb-3">
-                    <div className="d-flex align-items-center text-muted small">
-                      <i className="bi bi-speedometer2 me-1"></i>
-                      <span>{item.tire.load_index}{item.tire.speed_index?.code || ''}</span>
+            return (
+              <div key={index} className="col-12 col-md-6 col-xl-4 animate-fade-in">
+                <div className="premium-card h-100">
+                  {/* Card Header */}
+                  <div className="d-flex justify-content-between align-items-center p-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <div className="d-flex align-items-center">
+                      <div className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                        style={{
+                          width: '40px', height: '40px',
+                          background: isService
+                            ? 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.1))'
+                            : 'var(--color-accent-muted)'
+                        }}>
+                        <i className={`bi ${isService ? 'bi-wrench' : 'bi-circle'} small`}
+                          style={{ color: isService ? '#a855f7' : 'var(--color-info)' }}></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-0 fw-bold">{item.tire.product.name}</h6>
+                        <small className="text-muted">
+                          {isService ? 'Servicio' : `${item.tire.width}/${item.tire.height}/R${item.tire.diameter}`}
+                        </small>
+                      </div>
                     </div>
-                    <div className="d-flex align-items-center text-muted small">
-                      <i className="bi bi-stack me-1"></i>
-                      <span>Cantidad: <strong className="text-white">{item.count}</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Price Input */}
-                  <label className="form-label small text-muted">Precio unitario</label>
-                  <div className="input-group mb-3">
-                    <span className="input-group-text">€</span>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={item.tire.product.price}
-                      onChange={(e) => handlePriceChange(index, e.target.value)}
-                    />
+                    {isService ? (
+                      <span className="badge" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+                        <i className="bi bi-tools me-1"></i>Servicio
+                      </span>
+                    ) : (
+                      <span className={`badge ${item.tire.is_new ? 'bg-success bg-opacity-25 text-success' : 'bg-warning bg-opacity-25 text-warning'}`}>
+                        {item.tire.is_new ? 'Nueva' : 'Ocasión'}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Line Total */}
-                  <div className="d-flex justify-content-between align-items-center p-2 rounded"
-                    style={{ background: 'var(--color-accent-muted)' }}>
-                    <span className="small fw-medium text-muted">Subtotal línea</span>
-                    <span className="fw-bold text-info fs-5">
-                      € {(Number(item.count) * Number(item.tire.product.price)).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                  <div className="card-body">
+                    {/* Info row */}
+                    <div className="d-flex gap-3 mb-3">
+                      {!isService && (
+                        <div className="d-flex align-items-center text-muted small">
+                          <i className="bi bi-speedometer2 me-1"></i>
+                          <span>{item.tire.load_index}{item.tire.speed_index?.code || ''}</span>
+                        </div>
+                      )}
+                      <div className="d-flex align-items-center text-muted small">
+                        <i className="bi bi-stack me-1"></i>
+                        <span>Cantidad: <strong className="text-white">{item.count}</strong></span>
+                      </div>
+                    </div>
 
-                {/* Delete Action */}
-                <div className="px-3 pb-3">
-                  <button
-                    type="button"
-                    className="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center"
-                    onClick={() => handleDelete(index)}
-                    style={{ borderColor: 'var(--color-danger-muted)', color: 'var(--color-danger)' }}
-                  >
-                    <i className="bi bi-trash me-2"></i> Quitar del carrito
-                  </button>
+                    {/* Price Input */}
+                    <label className="form-label small text-muted">Precio unitario</label>
+                    <div className="input-group mb-3">
+                      <span className="input-group-text">€</span>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={item.tire.product.price}
+                        onChange={(e) => handlePriceChange(index, e.target.value)}
+                      />
+                    </div>
+
+                    {/* Line Total */}
+                    <div className="d-flex justify-content-between align-items-center p-2 rounded"
+                      style={{ background: 'var(--color-accent-muted)' }}>
+                      <span className="small fw-medium text-muted">Subtotal línea</span>
+                      <span className="fw-bold text-info fs-5">
+                        € {(Number(item.count) * Number(item.tire.product.price)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Delete Action */}
+                  <div className="px-3 pb-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center"
+                      onClick={() => handleDelete(index)}
+                      style={{ borderColor: 'var(--color-danger-muted)', color: 'var(--color-danger)' }}
+                    >
+                      <i className="bi bi-trash me-2"></i> Quitar del carrito
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

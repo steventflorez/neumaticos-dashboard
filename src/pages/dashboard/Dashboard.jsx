@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { getSalesByCreationDate, getCashRegister, deleteSale } from '../../data/products/Tire';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
     const [totalSales, setTotalSales] = useState(0);
@@ -12,6 +12,7 @@ export const Dashboard = () => {
     const [cashRegister, setCashRegister] = useState(null);
     const [saleToDelete, setSaleToDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const navigate = useNavigate();
 
     const handleCustomDateFilter = async (startDate, endDate) => {
         try {
@@ -133,13 +134,23 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Sales Value */}
-                            <div className="text-center py-4">
+                            {/* Sales Value - Clickable */}
+                            <div
+                                className="text-center py-4 rounded-3"
+                                style={{ cursor: 'pointer', transition: 'background 0.2s' }}
+                                onClick={() => navigate(`/ventas/${activeFilter}`)}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
                                 <div className="stat-label mb-2">Ingresos — {filterLabels[activeFilter]}</div>
                                 <div className="stat-value text-info">€ {totalSales.toFixed(2)}</div>
                                 <div className="text-muted small mt-2">
                                     <i className="bi bi-receipt me-1"></i>
                                     {salesCount} venta{salesCount !== 1 ? 's' : ''} registrada{salesCount !== 1 ? 's' : ''}
+                                </div>
+                                <div className="text-info small mt-2">
+                                    <i className="bi bi-arrow-right-circle me-1"></i>
+                                    Ver detalle de ventas
                                 </div>
                             </div>
                         </div>

@@ -42,7 +42,8 @@ export const getSalesByCreationDate = async (startDate, endDate) => {
             list_sale(
                 *,
                 product:product_id(*)
-            )
+            ),
+            list_sale_service(*)
         `)
         .gte("created_at", startDate)
         .lte("created_at", endDate)
@@ -206,6 +207,7 @@ export const partialUpdateTireWithProduct = async (tireId, tireData = {}, produc
 
 const normaliseItem = (rawItem = {}) => {
     const tire = rawItem.tire ?? null;
+    const isService = rawItem.isService === true;
 
     const product = tire?.product ?? null;
     const productId = product?.id ?? rawItem.product_id ?? rawItem.id ?? null;
@@ -219,7 +221,8 @@ const normaliseItem = (rawItem = {}) => {
         productId,
         quantity,
         unitPrice,
-        name
+        name,
+        isService
     };
 };
 
@@ -231,8 +234,14 @@ export const createSaleWithItems = async (saleData = {}, items = []) => {
 
         const normalisedItems = items.map(normaliseItem);
 
-        // Validar items básicos
-        for (const item of normalisedItems) {
+        // Separar items de productos y servicios ANTES de validar
+        const productItems = normalisedItems.filter(item => !item.isService);
+        const serviceItems = normalisedItems.filter(item => item.isService);
+
+        console.log('[createSaleWithItems] Productos:', productItems.length, 'Servicios:', serviceItems.length);
+
+        // Validar items de productos (los servicios no necesitan productId)
+        for (const item of productItems) {
             if (!item.productId) {
                 throw new Error("Uno de los productos no tiene un ID válido.");
             }
@@ -241,28 +250,36 @@ export const createSaleWithItems = async (saleData = {}, items = []) => {
             }
         }
 
-        // Verificar stock de todos los productos
-        const productIds = normalisedItems.map(item => item.productId);
-        const { data: products, error: productsError } = await supabase
-            .from("Product")
-            .select("id, stock, name")
-            .in("id", productIds);
-
-        if (productsError) throw productsError;
-
-        // Crear mapa de productos para acceso rápido
-        const productMap = new Map(products.map(p => [p.id, p]));
-
-        // Verificar stock suficiente
-        for (const item of normalisedItems) {
-            const product = productMap.get(item.productId);
-            if (!product) {
-                throw new Error(`Producto con ID ${item.productId} no encontrado.`);
+        // Validar cantidades de servicios
+        for (const item of serviceItems) {
+            if (!item.quantity || item.quantity <= 0) {
+                throw new Error("La cantidad del servicio debe ser mayor a cero.");
             }
-            if (product.stock < item.quantity) {
-                throw new Error(
-                    `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`
-                );
+        }
+
+        // Verificar stock solo de productos (no servicios)
+        let productMap = new Map();
+        if (productItems.length > 0) {
+            const productIds = productItems.map(item => item.productId);
+            const { data: products, error: productsError } = await supabase
+                .from("Product")
+                .select("id, stock, name")
+                .in("id", productIds);
+
+            if (productsError) throw productsError;
+
+            productMap = new Map(products.map(p => [p.id, p]));
+
+            for (const item of productItems) {
+                const product = productMap.get(item.productId);
+                if (!product) {
+                    throw new Error(`Producto con ID ${item.productId} no encontrado.`);
+                }
+                if (product.stock < item.quantity) {
+                    throw new Error(
+                        `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`
+                    );
+                }
             }
         }
 
@@ -295,29 +312,52 @@ export const createSaleWithItems = async (saleData = {}, items = []) => {
             throw saleError;
         }
 
-        // CORREGIDO: Usar los nombres de columna correctos
-        const saleItems = normalisedItems.map(item => ({
-            sale_id: sale.id,
-            product_id: item.productId,
-            count: item.quantity,              // ✅ count en lugar de quantity
-            price: item.unitPrice,             // ✅ price en lugar de unit_price
-            total_price: item.unitPrice * item.quantity  // ✅ total_price en lugar de subtotal
-        }));
+        // Insertar items de productos en list_sale (solo productos, no servicios)
+        let insertedItems = [];
+        if (productItems.length > 0) {
+            const saleItems = productItems.map(item => ({
+                sale_id: sale.id,
+                product_id: item.productId,
+                count: item.quantity,
+                price: item.unitPrice,
+                total_price: item.unitPrice * item.quantity
+            }));
 
-        const { data: insertedItems, error: itemsError } = await supabase
-            .from("list_sale")
-            .insert(saleItems)
-            .select();
+            const { data, error: itemsError } = await supabase
+                .from("list_sale")
+                .insert(saleItems)
+                .select();
 
-        if (itemsError) {
-            console.error('[createSaleWithItems] Error al crear items:', itemsError);
-            // Intentar rollback manual de la venta
-            await supabase.from("sale").delete().eq("id", sale.id);
-            throw itemsError;
+            if (itemsError) {
+                console.error('[createSaleWithItems] Error al crear items:', itemsError);
+                await supabase.from("sale").delete().eq("id", sale.id);
+                throw itemsError;
+            }
+            insertedItems = data;
         }
 
-        // Actualizar stock de productos
-        for (const item of normalisedItems) {
+        // Insertar servicios en list_sale_service
+        if (serviceItems.length > 0) {
+            const serviceEntries = serviceItems.map(item => ({
+                sale_id: sale.id,
+                service_name: item.name,
+                count: item.quantity,
+                price: item.unitPrice,
+                total_price: item.unitPrice * item.quantity
+            }));
+
+            const { error: serviceItemsError } = await supabase
+                .from("list_sale_service")
+                .insert(serviceEntries);
+
+            if (serviceItemsError) {
+                console.error('[createSaleWithItems] Error al crear items de servicio:', serviceItemsError);
+                throw serviceItemsError;
+            }
+        }
+
+        // Actualizar stock solo de productos (no servicios)
+        for (const item of productItems) {
             const { data: currentProduct, error: currentProductError } = await supabase
                 .from("Product")
                 .select("stock")

@@ -1,18 +1,50 @@
-import React from 'react'
+import React, { useState } from 'react'
 import PropTypes from "prop-types";
 import { useDispatch } from 'react-redux';
-import { startSetAddProduct, startSetEdit, startSetProductSlice } from '../../../store/products/thunks';
+import { startSetEdit, startSetProductSlice } from '../../../store/products/thunks';
 
 export const CardRueda = ({ tire }) => {
     const dispatch = useDispatch();
+    const [cantidad, setCantidad] = useState('');
+    const [showCantidad, setShowCantidad] = useState(false);
+    const [added, setAdded] = useState(false);
+    const [stockError, setStockError] = useState('');
+
     const setState = () => {
         dispatch(startSetEdit(true))
         dispatch(startSetProductSlice(tire))
     }
 
-    const setAddProduct = () => {
-        dispatch(startSetAddProduct(tire))
-    }
+    const handleAddToCart = () => {
+        const count = parseInt(cantidad);
+        if (!count || count <= 0) return;
+
+        const stock = tire.product?.stock || 0;
+        const products = JSON.parse(localStorage.getItem('productsCar')) || [];
+
+        // Verificar si ya existe en el carrito
+        const existingIdx = products.findIndex(item => item.tire?.id === tire.id);
+        const countInCart = existingIdx >= 0 ? parseInt(products[existingIdx].count) : 0;
+
+        if ((countInCart + count) > stock) {
+            setStockError(`Stock insuficiente. Disponible: ${stock - countInCart} u.`);
+            return;
+        }
+
+        setStockError('');
+
+        if (existingIdx >= 0) {
+            products[existingIdx].count = countInCart + count;
+        } else {
+            products.push({ tire, count });
+        }
+
+        localStorage.setItem('productsCar', JSON.stringify(products));
+        setCantidad('');
+        setShowCantidad(false);
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1500);
+    };
 
     if (!tire?.product) {
         return null;
@@ -102,6 +134,44 @@ export const CardRueda = ({ tire }) => {
                         </div>
                     )}
 
+                    {/* Inline Quantity Input */}
+                    {showCantidad && (
+                        <div className="mb-3 animate-fade-in">
+                            <div className="input-group">
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    placeholder="Cantidad"
+                                    min="1"
+                                    max={tire.product?.stock || 0}
+                                    value={cantidad}
+                                    onChange={(e) => { setCantidad(e.target.value); setStockError(''); }}
+                                    autoFocus
+                                />
+                                <button
+                                    className="btn btn-primary d-flex align-items-center"
+                                    onClick={handleAddToCart}
+                                    disabled={!cantidad || parseInt(cantidad) <= 0}
+                                >
+                                    <i className="bi bi-cart-check me-1"></i>Añadir
+                                </button>
+                            </div>
+                            {stockError && (
+                                <small className="text-danger mt-1 d-block">
+                                    <i className="bi bi-exclamation-triangle me-1"></i>{stockError}
+                                </small>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Success feedback */}
+                    {added && (
+                        <div className="alert alert-success py-2 mb-3 d-flex align-items-center small animate-fade-in" role="alert">
+                            <i className="bi bi-check-circle me-2"></i>
+                            Añadido al carrito
+                        </div>
+                    )}
+
                     {/* Actions */}
                     <div className="d-flex gap-2">
                         <button
@@ -116,9 +186,7 @@ export const CardRueda = ({ tire }) => {
                         <button
                             type="button"
                             className="btn btn-primary btn-sm flex-fill d-flex align-items-center justify-content-center"
-                            data-bs-toggle="modal"
-                            data-bs-target="#confirmacionModal"
-                            onClick={setAddProduct}
+                            onClick={() => setShowCantidad(!showCantidad)}
                         >
                             <i className="bi bi-cart-plus me-2"></i> Venta
                         </button>
