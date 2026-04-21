@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
+import { deleteService } from '../../../data/services/Service';
 
 export const CardServicio = ({ service, onEdit, onRefresh }) => {
     const [cantidad, setCantidad] = useState('');
     const [showCantidad, setShowCantidad] = useState(false);
     const [added, setAdded] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        try {
+            setDeleting(true);
+            await deleteService(service.id);
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            console.error('Error al eliminar servicio:', error);
+        } finally {
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
 
     const handleAddToCart = () => {
         const count = parseInt(cantidad);
@@ -116,6 +132,29 @@ export const CardServicio = ({ service, onEdit, onRefresh }) => {
                         </div>
                     )}
 
+                    {/* Delete Confirmation */}
+                    {showDeleteConfirm && (
+                        <div className="alert alert-danger py-2 mb-3 d-flex align-items-center justify-content-between small animate-fade-in" role="alert">
+                            <span><i className="bi bi-exclamation-triangle me-1"></i>¿Eliminar este servicio?</span>
+                            <div className="d-flex gap-1">
+                                <button
+                                    className="btn btn-danger btn-sm px-2 py-0"
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? <i className="bi bi-hourglass-split"></i> : 'Sí'}
+                                </button>
+                                <button
+                                    className="btn btn-outline-light btn-sm px-2 py-0"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={deleting}
+                                >
+                                    No
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Actions */}
                     <div className="d-flex gap-2">
                         <button
@@ -131,6 +170,14 @@ export const CardServicio = ({ service, onEdit, onRefresh }) => {
                             onClick={() => setShowCantidad(!showCantidad)}
                         >
                             <i className="bi bi-cart-plus me-2"></i>Venta
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            title="Eliminar servicio"
+                        >
+                            <i className="bi bi-trash"></i>
                         </button>
                     </div>
                 </div>

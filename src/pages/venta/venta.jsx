@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MosalVenta } from './MosalVenta.jsx'
+import { QuickProductModal } from './QuickProductModal.jsx'
 import { startSetSale } from '../../store/products/thunks.js';
 import { useDispatch } from 'react-redux';
 
@@ -47,6 +48,10 @@ export const Venta = () => {
     setProductos(prevProductos => prevProductos.filter((_, i) => i !== index));
   };
 
+  const handleAddQuickProduct = (quickProduct) => {
+    setProductos(prev => [...prev, quickProduct]);
+  };
+
   const handleConfirmSale = () => {
     const sale = {
       name_cliente: '',
@@ -75,8 +80,17 @@ export const Venta = () => {
           <h1 className="fw-bold mb-1">Punto de Venta</h1>
           <p className="text-muted fs-5 mb-0">Gestiona los productos del carrito y confirma la venta</p>
         </div>
-        <div className="col-lg-4 col-12 mt-3 mt-lg-0 text-lg-end">
-          <span className="badge bg-info bg-opacity-25 text-info fs-6 py-2 px-3">
+        <div className="col-lg-4 col-12 mt-3 mt-lg-0 text-lg-end d-flex justify-content-lg-end gap-3 flex-wrap align-items-center">
+          <button 
+            type="button" 
+            className="btn btn-outline-warning d-flex align-items-center"
+            data-bs-toggle="modal"
+            data-bs-target="#quick_product_modal"
+          >
+            <i className="bi bi-lightning-charge me-2"></i>
+            Venta Rápida
+          </button>
+          <span className="badge bg-info bg-opacity-25 text-info fs-6 py-2 px-3 d-flex align-items-center">
             <i className="bi bi-cart3 me-2"></i>
             {productos.length} producto{productos.length !== 1 ? 's' : ''}
           </span>
@@ -95,7 +109,8 @@ export const Venta = () => {
       ) : (
         <div className="row g-4 stagger-children" style={{ marginBottom: '140px' }}>
           {productos.map((item, index) => {
-            const isService = item.isService === true;
+            const isService = item.isService === true && item.isQuickProduct !== true;
+            const isQuick = item.isQuickProduct === true;
 
             return (
               <div key={index} className="col-12 col-md-6 col-xl-4 animate-fade-in">
@@ -108,21 +123,27 @@ export const Venta = () => {
                           width: '40px', height: '40px',
                           background: isService
                             ? 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.1))'
+                            : isQuick
+                            ? 'linear-gradient(135deg, rgba(234,179,8,0.2), rgba(202,138,4,0.1))'
                             : 'var(--color-accent-muted)'
                         }}>
-                        <i className={`bi ${isService ? 'bi-wrench' : 'bi-circle'} small`}
-                          style={{ color: isService ? '#a855f7' : 'var(--color-info)' }}></i>
+                        <i className={`bi ${isService ? 'bi-wrench' : isQuick ? 'bi-lightning-charge' : 'bi-circle'} small`}
+                          style={{ color: isService ? '#a855f7' : isQuick ? '#eab308' : 'var(--color-info)' }}></i>
                       </div>
                       <div>
                         <h6 className="mb-0 fw-bold">{item.tire.product.name}</h6>
                         <small className="text-muted">
-                          {isService ? 'Servicio' : `${item.tire.width}/${item.tire.height}/R${item.tire.diameter}`}
+                          {isService ? 'Servicio' : isQuick ? (item.tire.product.description || 'Venta rápida') : `${item.tire.width}/${item.tire.height}/R${item.tire.diameter}`}
                         </small>
                       </div>
                     </div>
                     {isService ? (
                       <span className="badge" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
                         <i className="bi bi-tools me-1"></i>Servicio
+                      </span>
+                    ) : isQuick ? (
+                      <span className="badge" style={{ background: 'rgba(234,179,8,0.15)', color: '#eab308' }}>
+                        <i className="bi bi-lightning-charge me-1"></i>Rápido
                       </span>
                     ) : (
                       <span className={`badge ${item.tire.is_new ? 'bg-success bg-opacity-25 text-success' : 'bg-warning bg-opacity-25 text-warning'}`}>
@@ -134,7 +155,7 @@ export const Venta = () => {
                   <div className="card-body">
                     {/* Info row */}
                     <div className="d-flex gap-3 mb-3">
-                      {!isService && (
+                      {!isService && !isQuick && (
                         <div className="d-flex align-items-center text-muted small">
                           <i className="bi bi-speedometer2 me-1"></i>
                           <span>{item.tire.load_index}{item.tire.speed_index?.code || ''}</span>
@@ -239,6 +260,7 @@ export const Venta = () => {
       )}
 
       <MosalVenta />
+      <QuickProductModal onAdd={handleAddQuickProduct} />
     </>
   );
 };

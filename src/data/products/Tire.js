@@ -13,7 +13,8 @@ export const getTireByRef = async (ref) => {
         .select("*,product:product_id(*),speed_index:speed_rating_id(*)")
         .eq("width", width)
         .eq("height", height)
-        .eq("diameter", diameter);
+        .eq("diameter", diameter)
+        .is("deleted_at", null);
     if (error) throw error;
     return data;
 }
@@ -22,7 +23,8 @@ export const getTireByDiameter = async (diameter) => {
         .from("tire")
         .select("*,product:product_id(*),speed_index:speed_rating_id(*)")
         .eq("diameter", diameter)
-        .gt("product_id.stock", 0); // ✅ Usar el nombre de la columna FK, no el alias
+        .is("deleted_at", null)
+        .gt("product_id.stock", 0);
     
     if (error) throw error;
     return data;
@@ -165,6 +167,44 @@ export const updateTireWithProduct = async (tireId, tireData, productData) => {
         throw error;
     }
 }
+
+// Función para eliminar un tire con su producto (soft delete)
+export const deleteTireWithProduct = async (tireId) => {
+    try {
+        // 1. Obtener el tire actual para sacar el product_id
+        const { data: currentTire, error: getTireError } = await supabase
+            .from("tire")
+            .select("product_id")
+            .eq("id", tireId)
+            .single();
+
+        if (getTireError) throw getTireError;
+        if (!currentTire) throw new Error(`Tire con ID ${tireId} no encontrado.`);
+
+        const now = new Date().toISOString();
+
+        // 2. Soft-delete del tire
+        const { error: tireError } = await supabase
+            .from("tire")
+            .update({ deleted_at: now })
+            .eq("id", tireId);
+
+        if (tireError) throw tireError;
+
+        // 3. Soft-delete del producto asociado
+        const { error: productError } = await supabase
+            .from("Product")
+            .update({ deleted_at: now, is_active: false })
+            .eq("id", currentTire.product_id);
+
+        if (productError) throw productError;
+
+        return { success: true, message: `Neumático #${tireId} eliminado correctamente.` };
+    } catch (error) {
+        console.error('[deleteTireWithProduct] Error:', error);
+        throw error;
+    }
+};
 
 // Función para actualizar solo ciertos campos
 export const partialUpdateTireWithProduct = async (tireId, tireData = {}, productData = {}) => {
